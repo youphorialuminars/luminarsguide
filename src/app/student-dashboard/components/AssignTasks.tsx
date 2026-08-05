@@ -78,7 +78,7 @@ export default function AssignTasks({ aiTasks = [], defaultStudentId }: AssignTa
     setLoading(true);
     const supabase = createClient();
 
-    const [{ data: studs }, { data: taskData }] = await Promise.all([
+    const [studResult, taskResult] = await Promise.all([
       supabase.from('students').select('id, name').eq('mentor_id', user.id).order('name'),
       supabase
         .from('student_tasks')
@@ -87,11 +87,11 @@ export default function AssignTasks({ aiTasks = [], defaultStudentId }: AssignTa
         .order('created_at', { ascending: false }),
     ]);
 
-    const studList = studs || [];
+    const studList = studResult.data || [];
     setStudents(studList);
 
     // Enrich tasks with student names
-    const enriched = (taskData || []).map((t) => ({
+    const enriched = (taskResult.data || []).map((t) => ({
       ...t,
       student_name: studList.find((s) => s.id === t.student_id)?.name || 'Unknown',
     }));
