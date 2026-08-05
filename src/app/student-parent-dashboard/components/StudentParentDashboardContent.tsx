@@ -9,6 +9,7 @@ import { useRealtimeSubscription } from '@/lib/hooks/useRealtimeSubscription';
 import SurveysSection from '../../student-dashboard/components/SurveysSection';
 import MyTasks from './MyTasks';
 import EmergencyContactWidget from '@/components/EmergencyContactWidget';
+import MentorStudentChat from '@/components/MentorStudentChat';
 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ interface StudentInfo {
   sessions: number;
   primary_topic: string;
   trend: string;
+  mentor_id: string;
 }
 
 interface TierInfo {
@@ -161,6 +163,9 @@ export default function StudentParentDashboardContent() {
   const [linkingSchoolCode, setLinkingSchoolCode] = useState(false);
   const [schoolLinked, setSchoolLinked] = useState(false);
 
+  // Mentor info for chat
+  const [mentorName, setMentorName] = useState<string>('Mentor');
+
   useEffect(() => {
     const now = new Date();
     setCalYear(now.getFullYear());
@@ -183,7 +188,7 @@ export default function StudentParentDashboardContent() {
         // Fallback: try to find student by student_user_id or student_email matching user email
         const { data: fallbackStudent } = await supabase
           .from('students')
-          .select('id, name, grade, avg_score, sessions, primary_topic, trend')
+          .select('id, name, grade, avg_score, sessions, primary_topic, trend, mentor_id')
           .or(`student_user_id.eq.${user.id},student_email.eq.${user.email}`)
           .limit(1)
           .maybeSingle();
@@ -204,7 +209,7 @@ export default function StudentParentDashboardContent() {
       // Load student by the linked student_id
       const { data: studentData } = await supabase
         .from('students')
-        .select('id, name, grade, avg_score, sessions, primary_topic, trend')
+        .select('id, name, grade, avg_score, sessions, primary_topic, trend, mentor_id')
         .eq('id', profileData.student_id)
         .single();
 
@@ -281,7 +286,17 @@ export default function StudentParentDashboardContent() {
       .select('user_id, student_id, observations_count, suggestions_count, total_score, user_profiles(full_name), students(name)')
       .order('total_score', { ascending: false })
       .limit(10);
-    setLeaderboard(lbData || []);
+        setLeaderboard(lbData || []);
+
+    // Load mentor name for chat
+    if (studentData.mentor_id) {
+      const { data: mentorProfile } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', studentData.mentor_id)
+        .maybeSingle();
+      if (mentorProfile?.full_name) setMentorName(mentorProfile.full_name);
+    }
 
     setLoading(false);
   };
@@ -714,6 +729,26 @@ export default function StudentParentDashboardContent() {
 
   return (
     <div className="fade-in">
+      {/* Top action bar — always visible */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>{student.name}</h1>
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            Grade {student.grade} · {student.primary_topic}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {student.mentor_id && (
+            <MentorStudentChat
+              recipientId={student.mentor_id}
+              recipientName={mentorName}
+              studentId={student.id}
+            />
+          )}
+          <EmergencyContactWidget />
+        </div>
+      </div>
+
       {/* Tier Banner */}
       <div
         className="rounded-2xl p-5 mb-6 relative overflow-hidden"
@@ -730,14 +765,11 @@ export default function StudentParentDashboardContent() {
             <p className="text-sm" style={{ color: tier.color, opacity: 0.85 }}>{tier.banner}</p>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              <EmergencyContactWidget />
-              <div className="flex items-center gap-1.5">
-                <Trophy size={16} style={{ color: tier.color }} />
-                <span className="font-bold text-sm" style={{ color: tier.color }}>
-                  Avg Score: {student.avg_score}%
-                </span>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <Trophy size={16} style={{ color: tier.color }} />
+              <span className="font-bold text-sm" style={{ color: tier.color }}>
+                Avg Score: {student.avg_score}%
+              </span>
             </div>
             <span className="text-xs" style={{ color: tier.color, opacity: 0.7 }}>
               {student.sessions} sessions completed
@@ -766,22 +798,6 @@ export default function StudentParentDashboardContent() {
           <span className="text-xs ml-1" style={{ color: tier.color, opacity: 0.7 }}>
             {tier.name === 'Trailblazers' ? 'Top Tier! 🎉' : 'Keep going!'}
           </span>
-        </div>
-      </div>
-
-      {/* Student info */}
-      <div className="flex items-center gap-3 mb-5">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-          style={{ background: 'var(--gradient-primary)' }}
-        >
-          {student.name.charAt(0)}
-        </div>
-        <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>{student.name}</h1>
-          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Grade {student.grade} · {student.primary_topic}
-          </p>
         </div>
       </div>
 
