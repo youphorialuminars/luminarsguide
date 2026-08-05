@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Users, Filter, Link2, Copy, CheckCheck, RefreshCw, Mail, UserCheck, ShieldCheck, CheckSquare, ClipboardList, Trophy, Building2 } from 'lucide-react';
+import { Search, Plus, Users, Filter, Link2, Copy, CheckCheck, RefreshCw, Mail, UserCheck, ShieldCheck, CheckSquare, ClipboardList, Trophy, Building2, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import StudentCard from './StudentCard';
 import AddStudentModal from './AddStudentModal';
@@ -10,6 +10,7 @@ import WeeklyReflectionForm from './WeeklyReflectionForm';
 import ManageSurveys from './ManageSurveys';
 import AssignTasks from './AssignTasks';
 import MentorPeerRanking from './MentorPeerRanking';
+import MentorChatList from './MentorChatList';
 import EmergencyContactWidget from '@/components/EmergencyContactWidget';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,7 +63,7 @@ export default function StudentDashboardContent() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Active main tab
-  const [activeMainTab, setActiveMainTab] = useState<'students' | 'surveys' | 'tasks' | 'ranking'>('students');
+  const [activeMainTab, setActiveMainTab] = useState<'students' | 'surveys' | 'tasks' | 'ranking' | 'chat'>('students');
 
   // Mentor code state
   const [mentorCode, setMentorCode] = useState<string | null>(null);
@@ -320,6 +321,7 @@ export default function StudentDashboardContent() {
           { id: 'tasks', label: 'Assign Tasks', icon: CheckSquare },
           { id: 'surveys', label: 'Manage Surveys', icon: ClipboardList },
           { id: 'ranking', label: 'Peer Ranking', icon: Trophy },
+          { id: 'chat', label: 'Chat', icon: MessageSquare },
         ] as const).map((tab) => {
           const TabIcon = tab.icon;
           const isActive = activeMainTab === tab.id;
@@ -644,6 +646,9 @@ export default function StudentDashboardContent() {
           </div>
         </div>
       )}
+
+      {/* ── Chat Tab ── */}
+      {activeMainTab === 'chat' && <MentorChatList />}
 
       {showAddModal && (
         <AddStudentModal

@@ -17,6 +17,7 @@ const DEMO_CREDENTIALS = [
   { label: 'Mentor', email: 'mentor@luminar.guide', password: 'LuminarGuide@2026' },
   { label: 'Counselor', email: 'counselor@luminar.guide', password: 'LuminarCounselor@2026' },
   { label: 'Student/Parent', email: 'student@luminar.guide', password: 'LuminarStudent@2026' },
+  { label: 'School', email: 'school@luminar.guide', password: 'LuminarSchool@2026' },
 ];
 
 function getRoleRoute(role: string): string {
